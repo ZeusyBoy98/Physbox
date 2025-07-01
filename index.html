@@ -14,21 +14,65 @@
         }
         .header {
             position: absolute;
-            width: 100%;
+            width: calc(100% - 10px);
             height: 5%;
             top: 0;
             left: 0;
             background-color: black;
-            border-radius: 100;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-left: 10px;
+        }
+        #usingIndicator {
+            border-radius: 20px;
+            width: 10px;
+            height: 10px;
+            background-color: green;
         }
     </style>
   </head>
   <body>
     <div class="header">
         <button id="reset">Reset</button>
+        <button id="using">Toggle Control</button>
+        <div id="usingIndicator"></div>
+        <form>
+            <label for="bounce">Bounce:</label>
+            <input type="text" id="bounce" name="bounce" value=1>
+            <label for="gravity">Gravity:</label>
+            <input type="text" id="gravity" name="gravity" value=0.001>
+            <label for="velocity">Velocity:</label>
+            <input type="text" id="velocity" name="velocity" value=0.05>
+            <input type="submit" value="Submit">
+        </form>
+        <button id="normal">Normal</button>
+        <button id="player">Player</button>
+        <button id="square">Square</button>
+        <button id="triangle">Triangle</button>
     </div>
     <script src="matter.js"></script>
     <script>
+        /* 
+        using guide:
+        0 = Square place
+        1 = Control player
+        2 = Cursor
+        3 = Triangle place
+        */
+        const spawnedRectangles = [];
+
+        let reset = document.getElementById("reset");
+        let control = document.getElementById("using");
+
+        let using = 0
+
+        let modifier = 0.05;
+
+        let World = Matter.World;
+
         let Engine = Matter.Engine,
             Render = Matter.Render,
             Runner = Matter.Runner,
@@ -45,11 +89,13 @@
                 height: innerHeight
             }
         });
-        engine.gravity.scale = 0.001;    
+            
         let ground = Bodies.rectangle(innerWidth / 2, innerHeight, innerWidth, 60, { isStatic: true });
         let leftWall = Bodies.rectangle(0, innerHeight / 2, 60, innerHeight * 100, {isStatic: true});
-        let rightWall = Bodies.rectangle(innerWidth, innerHeight, 60, innerHeight * 100, {isStatic: true});
-        let circle = Bodies.circle(300, 40, 25);
+        let rightWall = Bodies.rectangle(innerWidth, innerHeight / 2, 60, innerHeight * 100, {isStatic: true});
+        let circle = Bodies.circle(innerWidth / 2, 40, 25);
+
+        engine.gravity.scale = 0.001;
         circle.restitution = 1;
 
         Composite.add(engine.world, [circle, ground, leftWall, rightWall]);
@@ -67,19 +113,63 @@
         };
 
         document.body.addEventListener("mousedown", (event) => {
-            let modifier = 0.05;
-            let cx = circle.position.x;
-            let cy = circle.position.y;
-            const { x, y } = event;
-            let vx = (x - cx) * modifier;
-            let vy = (y - cy) * modifier;
-            Matter.Body.setVelocity(circle, {x: vx, y: vy});
+            if (using != 1) {
+                let cx = circle.position.x;
+                let cy = circle.position.y;
+                const { x, y } = event;
+                let vx = (x - cx) * modifier;
+                let vy = (y - cy) * modifier;
+                Matter.Body.setVelocity(circle, {x: vx, y: vy});
+            } else if (using == 0) {
+                const { x, y } = event;
+                const newBody = Bodies.rectangle(x, y, 50, 50);
+                spawnedRectangles.push(newBody);
+                World.add(engine.world, newBody);
+            }
         });
-        let reset = document.getElementById("reset");
+        
         reset.addEventListener("click", () => {
             Matter.Body.setPosition(circle, {x: innerWidth / 2, y: innerHeight / 2});
             Matter.Body.setVelocity(circle, {x: 0, y: 0});
+            for (const body of spawnedRectangles) {
+                World.remove(engine.world, body);
+            }
+            spawnedRectangles.length = 0;
         });
+
+        control.addEventListener("click", () => {
+            if (using == 0) {
+                using = 1;
+                document.getElementById("usingIndicator").style.backgroundColor = "black";
+            } else {
+                using = 0;
+                document.getElementById("usingIndicator").style.backgroundColor = "green";
+            };
+            Matter.Body.setVelocity(circle, {x: 0, y: 0});
+        });
+        
+        const form = document.querySelector("form");
+
+        form.addEventListener("submit", (e) => {
+            e.preventDefault();
+
+            const bounceInput = parseFloat(document.getElementById("bounce").value);
+            const gravityInput = parseFloat(document.getElementById("gravity").value);
+            const velocityInput = parseFloat(document.getElementById("velocity").value);
+
+            if (!isNaN(bounceInput)) {
+                circle.restitution = bounceInput;
+            }
+
+            if (!isNaN(gravityInput)) {
+                engine.gravity.scale = gravityInput;
+            }
+
+            if (!isNaN(gravityInput)) {
+                modifier = velocityInput;
+            }
+        });
+
     </script>
   </body>
 </html>
