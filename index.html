@@ -17,7 +17,7 @@
         }
         .header {
             position: absolute;
-            width: calc(100% - 15px);
+            width: calc(100% - 1.2vw);
             height: 6%;
             top: 0;
             left: 0;
@@ -26,17 +26,11 @@
             border-bottom-right-radius: 20px;
             display: flex;
             align-items: center;
-            gap: 20px;
-            padding-left: 10px;
+            gap: 2vw;
+            padding-left: 1vw;
             border-width: 2px;
             border-color: grey;
             border-style: solid;
-        }
-        #usingIndicator {
-            border-radius: 20px;
-            width: 10px;
-            height: 10px;
-            background-color: green;
         }
         label {
             color: white;
@@ -78,6 +72,39 @@
             padding: 5px;
             width: 100px;
         }
+
+        @media (max-width: 1360px) {
+            body::before {
+                content: "I'm afraid that for your own health and safety, I'm gonna have to ask you to leave. Either get a bigger screen or go touch some grass.";
+                position: fixed;
+                top: 0; left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: black;
+                color: white;
+                font-size: 5vw;
+                font-weight: bold;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 99999;
+                text-align: center;
+                padding: 2rem;
+                box-sizing: border-box;
+            }
+
+            .header,
+            canvas {
+                pointer-events: none !important;
+            }
+            .header *,
+            form,
+            button,
+            input {
+                display: none !important;
+            }
+        }
+
     </style>
   </head>
   <body>
@@ -261,6 +288,11 @@
             }
         });
 
+        const isMobileBlocked = window.matchMedia("(max-width: 1360px)").matches;
+
+        if (isMobileBlocked) {
+            console.log("I'm watching you, little mobile user...");
+        }
     </script>
   </body>
 </html>
