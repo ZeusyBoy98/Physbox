@@ -70,7 +70,7 @@
             border: none;
             border-radius: 10px;
             padding: 5px;
-            width: 100px;
+            width: 70px;
         }
 
         @media (max-width: 1360px) {
@@ -119,6 +119,10 @@
             <input type="text" id="velocity" name="velocity" value=0.05>
             <label for="newBounce">New Shape Bounce:</label>
             <input type="text" id="newBounce" name="newBounce" value=0>
+            <label for="playerColour">Player Colour:</label>
+            <input type="text" id="playerColour" name="playerColour" value="#e303fc">
+            <label for="newShapeColour">New Shape Colour:</label>
+            <input type="text" id="newShapeColour" name="newShapeColour" value="#ffffff">
             <input class="button" type="submit" value="Submit">
         </form>
         <button class="button" id="cursor" style="background-color: green;">Cursor</button>
@@ -148,6 +152,8 @@
 
         let modifier = 0.05;
         let newBounce = 0;
+        let playerColour = "#e303fc";
+        let newShapeColour = "#ffffff";
 
         let World = Matter.World;
 
@@ -164,14 +170,15 @@
             engine: engine,
             options: {
                 width: innerWidth,
-                height: innerHeight
+                height: innerHeight,
+                wireframes: false
             }
         });
             
         let ground = Bodies.rectangle(innerWidth / 2, innerHeight, innerWidth, 60, { isStatic: true });
         let leftWall = Bodies.rectangle(0, innerHeight / 2, 60, innerHeight * 100, {isStatic: true});
         let rightWall = Bodies.rectangle(innerWidth, innerHeight / 2, 60, innerHeight * 100, {isStatic: true});
-        let circle = Bodies.circle(innerWidth / 2, 40, 25);
+        let circle = Bodies.circle(innerWidth / 2, 40, 25, {render: {fillStyle: playerColour}});
 
         engine.gravity.scale = 0.001;
         circle.restitution = 1;
@@ -203,13 +210,13 @@
                 Matter.Body.setVelocity(circle, {x: vx, y: vy});
             } else if (using === 1) {
                 const { x, y } = event;
-                const newBody = Bodies.rectangle(x, y, 50, 50);
+                const newBody = Bodies.rectangle(x, y, 50, 50, {render: {fillStyle: newShapeColour}});
                 newBody.restitution = newBounce;
                 spawnedShapes.push(newBody);
                 World.add(engine.world, newBody);
             } else if (using === 3) {
                 const { x, y } = event;
-                const newBody = Bodies.polygon(x, y, 3, 50);
+                const newBody = Bodies.polygon(x, y, 3, 50, {render: {fillStyle: newShapeColour}});
                 newBody.restitution = newBounce;
                 spawnedShapes.push(newBody);
                 World.add(engine.world, newBody);
@@ -270,6 +277,8 @@
             const gravityInput = parseFloat(document.getElementById("gravity").value);
             const velocityInput = parseFloat(document.getElementById("velocity").value);
             const newBounceInput = parseFloat(document.getElementById("newBounce").value);
+            const playerColourInput = document.getElementById("playerColour").value.trim();
+            const newShapeColourInput = document.getElementById("newShapeColour").value.trim();
 
             if (!isNaN(bounceInput)) {
                 circle.restitution = bounceInput;
@@ -286,7 +295,17 @@
             if (!isNaN(gravityInput)) {
                 modifier = velocityInput;
             }
-        });
+
+            if (playerColourInput) {
+                playerColour = playerColourInput;
+                circle.render.fillStyle = playerColour;
+            }
+
+            if (newShapeColourInput) {
+                newShapeColour = newShapeColourInput;
+            }
+        }
+        );
 
         const isMobileBlocked = window.matchMedia("(max-width: 1360px)").matches;
 
