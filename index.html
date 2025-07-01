@@ -124,6 +124,9 @@
         };
 
         document.body.addEventListener("mousedown", (event) => {
+            if (event.target.closest("button, input, label, form")) {
+                return; // don't trigger mousedown logic on UI controls
+            }
             if (using === 0) {
                 let cx = circle.position.x;
                 let cy = circle.position.y;
