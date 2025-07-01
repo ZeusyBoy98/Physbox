@@ -6,11 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Physbox</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
         body {
             width: 100%;
             height: 100%; 
             margin: 0;
-            overflow: hidden
+            overflow: hidden;
+            font-family: "Roboto", Calibri;
         }
         .header {
             position: absolute;
@@ -23,7 +26,7 @@
             border-bottom-right-radius: 20px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 20px;
             padding-left: 10px;
         }
         #usingIndicator {
@@ -32,13 +35,14 @@
             height: 10px;
             background-color: green;
         }
+        label {
+            color: white;
+        }
     </style>
   </head>
   <body>
     <div class="header">
         <button id="reset">Reset</button>
-        <button id="using">Toggle Control</button>
-        <div id="usingIndicator"></div>
         <form>
             <label for="bounce">Bounce:</label>
             <input type="text" id="bounce" name="bounce" value=1>
@@ -46,30 +50,37 @@
             <input type="text" id="gravity" name="gravity" value=0.001>
             <label for="velocity">Velocity:</label>
             <input type="text" id="velocity" name="velocity" value=0.05>
+            <label for="newBounce">New Shape Bounce:</label>
+            <input type="text" id="newBounce" name="newBounce" value=0>
             <input type="submit" value="Submit">
         </form>
-        <button id="normal">Normal</button>
-        <button id="player">Player</button>
-        <button id="square">Square</button>
-        <button id="triangle">Triangle</button>
+        <button id="cursor" style="background-color: green;">Cursor</button>
+        <button id="player" style="background-color: grey;">Player</button>
+        <button id="square" style="background-color: grey;">Square</button>
+        <button id="triangle" style="background-color: grey;">Triangle</button>
     </div>
     <script src="matter.js"></script>
     <script>
         /* 
         using guide:
-        0 = Square place
-        1 = Control player
+        0 = Control player
+        1 = Square place
         2 = Cursor
         3 = Triangle place
         */
-        const spawnedRectangles = [];
+        const spawnedShapes = [];
 
         let reset = document.getElementById("reset");
         let control = document.getElementById("using");
+        let cursor = document.getElementById("cursor");
+        let player = document.getElementById("player");
+        let square = document.getElementById("square");
+        let triangle = document.getElementById("triangle");
 
-        let using = 0
+        let using = 2;
 
         let modifier = 0.05;
+        let newBounce = 0;
 
         let World = Matter.World;
 
@@ -113,17 +124,24 @@
         };
 
         document.body.addEventListener("mousedown", (event) => {
-            if (using != 1) {
+            if (using === 0) {
                 let cx = circle.position.x;
                 let cy = circle.position.y;
                 const { x, y } = event;
                 let vx = (x - cx) * modifier;
                 let vy = (y - cy) * modifier;
                 Matter.Body.setVelocity(circle, {x: vx, y: vy});
-            } else if (using == 0) {
+            } else if (using === 1) {
                 const { x, y } = event;
                 const newBody = Bodies.rectangle(x, y, 50, 50);
-                spawnedRectangles.push(newBody);
+                newBody.restitution = newBounce;
+                spawnedShapes.push(newBody);
+                World.add(engine.world, newBody);
+            } else if (using === 3) {
+                const { x, y } = event;
+                const newBody = Bodies.polygon(x, y, 3, 50);
+                newBody.restitution = newBounce;
+                spawnedShapes.push(newBody);
                 World.add(engine.world, newBody);
             }
         });
@@ -131,20 +149,45 @@
         reset.addEventListener("click", () => {
             Matter.Body.setPosition(circle, {x: innerWidth / 2, y: innerHeight / 2});
             Matter.Body.setVelocity(circle, {x: 0, y: 0});
-            for (const body of spawnedRectangles) {
+            for (const body of spawnedShapes) {
                 World.remove(engine.world, body);
             }
-            spawnedRectangles.length = 0;
+            spawnedShapes.length = 0;
         });
 
-        control.addEventListener("click", () => {
-            if (using == 0) {
-                using = 1;
-                document.getElementById("usingIndicator").style.backgroundColor = "black";
-            } else {
-                using = 0;
-                document.getElementById("usingIndicator").style.backgroundColor = "green";
-            };
+        cursor.addEventListener("click", () => {
+            using = 2;
+            player.style.backgroundColor = "grey"
+            cursor.style.backgroundColor = "green"
+            square.style.backgroundColor = "grey"
+            triangle.style.backgroundColor = "grey"
+            Matter.Body.setVelocity(circle, {x: 0, y: 0});
+        });
+
+        player.addEventListener("click", () => {
+            using = 0;
+            player.style.backgroundColor = "green"
+            cursor.style.backgroundColor = "grey"
+            square.style.backgroundColor = "grey"
+            triangle.style.backgroundColor = "grey"
+            Matter.Body.setVelocity(circle, {x: 0, y: 0});
+        });
+
+        square.addEventListener("click", () => {
+            using = 1;
+            player.style.backgroundColor = "grey"
+            cursor.style.backgroundColor = "grey"
+            square.style.backgroundColor = "green"
+            triangle.style.backgroundColor = "grey"
+            Matter.Body.setVelocity(circle, {x: 0, y: 0});
+        });
+
+        triangle.addEventListener("click", () => {
+            using = 3;
+            player.style.backgroundColor = "grey"
+            cursor.style.backgroundColor = "grey"
+            square.style.backgroundColor = "grey"
+            triangle.style.backgroundColor = "green"
             Matter.Body.setVelocity(circle, {x: 0, y: 0});
         });
         
@@ -156,9 +199,14 @@
             const bounceInput = parseFloat(document.getElementById("bounce").value);
             const gravityInput = parseFloat(document.getElementById("gravity").value);
             const velocityInput = parseFloat(document.getElementById("velocity").value);
+            const newBounceInput = parseFloat(document.getElementById("newBounce").value);
 
             if (!isNaN(bounceInput)) {
                 circle.restitution = bounceInput;
+            }
+
+            if (!isNaN(newBounceInput)) {
+                newBounce = newBounceInput;
             }
 
             if (!isNaN(gravityInput)) {
