@@ -5,6 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Physbox</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
 
@@ -26,12 +27,40 @@
             border-bottom-right-radius: 20px;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 2vw;
             padding-left: 1vw;
             border-width: 2px;
             border-color: grey;
             border-style: solid;
         }
+        .header2 {
+            position: absolute;
+            width: calc(100% - 1.2vw);
+            height: 6%;
+            top: 6%;
+            left: 0;
+            background-color: black;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            align-items: center;
+            gap: 2vw;
+            padding-left: 1vw;
+            border-width: 2px;
+            border-color: grey;
+            border-style: solid;
+            display: none;
+        }
+        .header2 form {
+            display: flex;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5vw;
+            margin: 0;
+            padding: 0;
+        }
+
         label {
             color: white;
         }
@@ -45,9 +74,13 @@
             background: #0069ed;
             color: #ffffff;
             font-family: sans-serif;
+            height: 1.5vw;
             font-size: 1rem;
             cursor: pointer;
             text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: background 250ms ease-in-out, 
                         transform 150ms ease;
         }
@@ -108,8 +141,19 @@
     </style>
   </head>
   <body>
-    <div class="header">
-        <button class="button" id="reset">Reset</button>
+    <div class="header" id="header">
+        <button class="button" id="reset" style="background-color: red;">Reset</button>
+        <button class="button" id="resetPlayer">Reset Player</button>
+        <button class="button" id="resetPhysics">Reset Physics</button>
+        <button class="button" style="width: 2vw;" id="dropdown">+</button>
+        <button class="button" id="cursor" style="background-color: green;">Cursor</button>
+        <button class="button" id="player" style="background-color: grey;">Player</button>
+        <button class="button" id="square" style="background-color: grey;">Square</button>
+        <button class="button" id="triangle" style="background-color: grey;">Triangle</button>
+        <button class="button" id="static" style="background-color: grey;">Static</button>
+        <button class="button" id="pause"><i class="material-icons">pause</i></button>
+    </div>
+    <div class="header2" id="header2">
         <form>
             <label for="bounce">Bounce:</label>
             <input type="text" id="bounce" name="bounce" value=1>
@@ -123,12 +167,15 @@
             <input type="text" id="playerColour" name="playerColour" value="#e303fc">
             <label for="newShapeColour">New Shape Colour:</label>
             <input type="text" id="newShapeColour" name="newShapeColour" value="#ffffff">
-            <input class="button" type="submit" value="Submit">
+            <label for="newStatic">Static Shape:</label>
+            <select name="newStatic" id="newStatic" class="button" style="background-color: white; color:black;">
+                <option value="default">Default</option>
+                <option value="square">Square</option>
+                <option value="triangle">Triangle</option>
+                <option value="circle">Circle</option>
+            </select>
+            <input class="button" type="submit" value="Submit" id="submit">
         </form>
-        <button class="button" id="cursor" style="background-color: green;">Cursor</button>
-        <button class="button" id="player" style="background-color: grey;">Player</button>
-        <button class="button" id="square" style="background-color: grey;">Square</button>
-        <button class="button" id="triangle" style="background-color: grey;">Triangle</button>
     </div>
     <script src="matter.js"></script>
     <script>
@@ -138,22 +185,33 @@
         1 = Square place
         2 = Cursor
         3 = Triangle place
+        4 = Static Place
         */
         const spawnedShapes = [];
 
         let reset = document.getElementById("reset");
-        let control = document.getElementById("using");
+        let resetPlayer = document.getElementById("resetPlayer");
+        let resetPhysics = document.getElementById("resetPhysics");
+        let submit = document.getElementById("submit");
+        let header = document.getElementById("header");
+        let header2 = document.getElementById("header2");
+        let dropdown = document.getElementById("dropdown");
         let cursor = document.getElementById("cursor");
         let player = document.getElementById("player");
         let square = document.getElementById("square");
         let triangle = document.getElementById("triangle");
+        let static = document.getElementById("static");
+        let pause = document.getElementById("pause");
 
         let using = 2;
+        let dropped = 0;
+        let isPaused = false;
 
         let modifier = 0.05;
         let newBounce = 0;
         let playerColour = "#e303fc";
         let newShapeColour = "#ffffff";
+        let newStaticShape = "default";
 
         let World = Matter.World;
 
@@ -197,10 +255,21 @@
             down: false
         };
 
+        function pausePhysics() {
+            Runner.stop(runner);
+            isPaused = true;
+        }
+
+        function resumePhysics() {
+            Runner.run(runner, engine);
+            isPaused = false;
+        }
+
         document.body.addEventListener("mousedown", (event) => {
             if (event.target.closest("button, input, label, form")) {
                 return;
             }
+            if (using === 2) return;
             if (using === 0) {
                 let cx = circle.position.x;
                 let cy = circle.position.y;
@@ -220,6 +289,21 @@
                 newBody.restitution = newBounce;
                 spawnedShapes.push(newBody);
                 World.add(engine.world, newBody);
+            } else if (using === 4) {
+                const { x, y } = event;
+                let newBody;
+                if (newStaticShape === "square") {
+                    newBody = Bodies.rectangle(x, y, 50, 50, {isStatic: true, render: {fillStyle: "#616161"}});
+                } else if (newStaticShape === "triangle") {
+                    newBody = Bodies.polygon(x, y, 3, 50, {isStatic: true, render: {fillStyle: "#616161"}});
+                } else if (newStaticShape === "circle") {
+                    newBody = Bodies.circle(x, y, 25, {isStatic: true, render: {fillStyle: "#616161"}});
+                } else {
+                    newBody = Bodies.rectangle(x, y, 200, 50, {isStatic: true, render: {fillStyle: "#616161"}});
+                }
+                newBody.restitution = newBounce;
+                spawnedShapes.push(newBody);
+                World.add(engine.world, newBody);
             }
         });
         
@@ -232,13 +316,43 @@
             spawnedShapes.length = 0;
         });
 
+        resetPlayer.addEventListener("click", () => {
+            Matter.Body.setPosition(circle, {x: innerWidth / 2, y: innerHeight / 2});
+            Matter.Body.setVelocity(circle, {x: 0, y: 0});
+        });
+
+        resetPhysics.addEventListener("click", () => {
+            document.getElementById("bounce").value = 1;
+            document.getElementById("gravity").value = 0.001;
+            document.getElementById("velocity").value = 0.05;
+            document.getElementById("newBounce").value = 0;
+            submit.click();
+        });
+
+        dropdown.addEventListener("click", () => {
+            if (dropped === 0) {
+                dropped = 1;
+                dropdown.innerHTML = "-";
+                header.style.borderBottomLeftRadius = 0;
+                header.style.borderBottomRightRadius = 0;
+                header2.style.display = "block"
+            } else {
+                dropped = 0;
+                dropdown.innerHTML = "+";
+                header.style.borderBottomLeftRadius = "20px";
+                header.style.borderBottomRightRadius = "20px";
+                header2.style.display = "none"
+            }
+            
+        });
+
         cursor.addEventListener("click", () => {
             using = 2;
             player.style.backgroundColor = "grey"
             cursor.style.backgroundColor = "green"
             square.style.backgroundColor = "grey"
             triangle.style.backgroundColor = "grey"
-            Matter.Body.setVelocity(circle, {x: 0, y: 0});
+            static.style.backgroundColor = "grey"
         });
 
         player.addEventListener("click", () => {
@@ -247,7 +361,7 @@
             cursor.style.backgroundColor = "grey"
             square.style.backgroundColor = "grey"
             triangle.style.backgroundColor = "grey"
-            Matter.Body.setVelocity(circle, {x: 0, y: 0});
+            static.style.backgroundColor = "grey"
         });
 
         square.addEventListener("click", () => {
@@ -256,7 +370,7 @@
             cursor.style.backgroundColor = "grey"
             square.style.backgroundColor = "green"
             triangle.style.backgroundColor = "grey"
-            Matter.Body.setVelocity(circle, {x: 0, y: 0});
+            static.style.backgroundColor = "grey"
         });
 
         triangle.addEventListener("click", () => {
@@ -265,8 +379,27 @@
             cursor.style.backgroundColor = "grey"
             square.style.backgroundColor = "grey"
             triangle.style.backgroundColor = "green"
-            Matter.Body.setVelocity(circle, {x: 0, y: 0});
+            static.style.backgroundColor = "grey"
         });
+
+        static.addEventListener("click", () => {
+            using = 4;
+            player.style.backgroundColor = "grey"
+            cursor.style.backgroundColor = "grey"
+            square.style.backgroundColor = "grey"
+            triangle.style.backgroundColor = "grey"
+            static.style.backgroundColor = "green"
+        });
+
+        pause.addEventListener("click", () => {
+            if (!isPaused) {
+                pause.innerHTML = "<i class='material-icons'>play_arrow</i>";
+                pausePhysics();
+            } else {
+                pause.innerHTML = "<i class='material-icons'>pause</i>";
+                resumePhysics();
+            }
+        })
         
         const form = document.querySelector("form");
 
@@ -279,6 +412,7 @@
             const newBounceInput = parseFloat(document.getElementById("newBounce").value);
             const playerColourInput = document.getElementById("playerColour").value.trim();
             const newShapeColourInput = document.getElementById("newShapeColour").value.trim();
+            const newStaticInput = document.getElementById("newStatic").value;
 
             if (!isNaN(bounceInput)) {
                 circle.restitution = bounceInput;
@@ -292,7 +426,7 @@
                 engine.gravity.scale = gravityInput;
             }
 
-            if (!isNaN(gravityInput)) {
+            if (!isNaN(velocityInput)) {
                 modifier = velocityInput;
             }
 
@@ -304,8 +438,9 @@
             if (newShapeColourInput) {
                 newShapeColour = newShapeColourInput;
             }
-        }
-        );
+
+            newStaticShape = newStaticInput;
+        });
 
         const isMobileBlocked = window.matchMedia("(max-width: 1360px)").matches;
 
