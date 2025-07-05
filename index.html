@@ -28,7 +28,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 2vw;
+            gap: 1vw;
             padding-left: 1vw;
             border-width: 2px;
             border-color: grey;
@@ -163,9 +163,12 @@
         <button class="button" id="square" style="background-color: grey;">Square</button>
         <button class="button" id="triangle" style="background-color: grey;">Triangle</button>
         <button class="button" id="static" style="background-color: grey;">Static</button>
+        <button class="button" id="weight" style="background-color: grey;">Weight</button>
         <button class="button" id="custom" style="background-color: grey;">Custom</button>
+        <label for="customInput" style="width: 2vw;">Sides:</label>
+        <input type="text" id="customInput" name="customInput" style="width: 2vw" value=5>
         <button class="button" id="swing" style="background-color: grey;">Swing</button>
-        <input type="text" id="customInput" name="customInput" value=5>
+        <button class="button" id="seasaw" style="background-color: grey;">Seasaw</button>
         <button class="button" id="pause"><i class="material-icons">pause</i></button>
     </div>
     <div class="header2" id="header2">
@@ -203,6 +206,7 @@
         4 = Static place
         5 = Custom place
         6 = Swing place
+        7 = Seasaw place
         */
         const spawnedShapes = [];
 
@@ -219,8 +223,9 @@
         let square = document.getElementById("square");
         let triangle = document.getElementById("triangle");
         let static = document.getElementById("static");
+        let weight = document.getElementById("weight");
         let custom = document.getElementById("custom");
-        let swing = document.getElementById("swing");
+        let seasaw = document.getElementById("seasaw");
         let customInput = 5
         let pause = document.getElementById("pause");
 
@@ -240,6 +245,7 @@
             Render = Matter.Render,
             Runner = Matter.Runner,
             Bodies = Matter.Bodies,
+            Body = Matter.Body,
             Composite = Matter.Composite,
             Constraint = Matter.Constraint;
 
@@ -290,7 +296,7 @@
                     const bodyB = pair.bodyB;
 
                     if (bodyA.isStatic || bodyB.isStatic) return;
-                    if (bodyA.label === "swing" || bodyB.label === "swing") return;
+                    if (bodyA.label === "no" || bodyB.label === "no") return;
 
                     if (cloneCooldown.has(bodyA.id)) return;
                     cloneCooldown.add(bodyA.id);
@@ -379,9 +385,8 @@
                 spawnedShapes.push(newBody);    
                 World.add(engine.world, newBody);
             } else if (using === 6) {
-                console.log("Swing placed");
                 const { x, y } = event;
-                const swingBar = Bodies.rectangle(x + 120, y, 240, 20, {render: { fillStyle: newShapeColour }, label: "swing"});
+                const swingBar = Bodies.rectangle(x + 120, y, 240, 20, {render: { fillStyle: newShapeColour }, label: "no"});
                 const hinge = Constraint.create({
                     pointA: { x: x, y: y },
                     bodyB: swingBar,
@@ -392,6 +397,25 @@
                 swingBar.restitution = newBounce;
                 spawnedShapes.push(swingBar, hinge);
                 World.add(engine.world, [swingBar, hinge]);
+            } else if (using === 7) {
+                const { x, y } = event;
+                const seasaw = Bodies.rectangle(x, y, 240, 20, {render: { fillStyle: newShapeColour }, label: "no"});
+                const hinge = Constraint.create({
+                    pointA: { x: x, y: y},
+                    bodyB: seasaw,
+                    pointB: { x: 0, y: 0 },
+                    length: 0,
+                    stiffness: 1
+                });
+                seasaw.restitution = newBounce;
+                spawnedShapes.push(seasaw, hinge);
+                World.add(engine.world, [seasaw, hinge]);
+            } else if (using === 8) {
+                const { x, y } = event;
+                const newBody = Bodies.rectangle(x, y, 50, 50, {render: {fillStyle: "#000000"}});
+                Body.setDensity(newBody, 10)
+                spawnedShapes.push(newBody);
+                World.add(engine.world, newBody);
             }
         });
         
@@ -443,6 +467,8 @@
             static.style.backgroundColor = "grey"
             custom.style.backgroundColor = "grey"
             swing.style.backgroundColor = "grey"
+            seasaw.style.backgroundColor = "grey"
+            weight.style.backgroundColor = "grey"
         });
 
         player.addEventListener("click", () => {
@@ -454,6 +480,8 @@
             static.style.backgroundColor = "grey"
             custom.style.backgroundColor = "grey"
             swing.style.backgroundColor = "grey"
+            seasaw.style.backgroundColor = "grey"
+            weight.style.backgroundColor = "grey"
         });
 
         square.addEventListener("click", () => {
@@ -465,6 +493,8 @@
             static.style.backgroundColor = "grey"
             custom.style.backgroundColor = "grey"
             swing.style.backgroundColor = "grey"
+            seasaw.style.backgroundColor = "grey"
+            weight.style.backgroundColor = "grey"
         });
 
         triangle.addEventListener("click", () => {
@@ -476,6 +506,8 @@
             static.style.backgroundColor = "grey"
             custom.style.backgroundColor = "grey"
             swing.style.backgroundColor = "grey"
+            seasaw.style.backgroundColor = "grey"
+            weight.style.backgroundColor = "grey"
         });
 
         static.addEventListener("click", () => {
@@ -487,6 +519,21 @@
             static.style.backgroundColor = "green"
             custom.style.backgroundColor = "grey"
             swing.style.backgroundColor = "grey"
+            seasaw.style.backgroundColor = "grey"
+            weight.style.backgroundColor = "grey"
+        });
+
+        weight.addEventListener("click", () => {
+            using = 8;
+            player.style.backgroundColor = "grey"
+            cursor.style.backgroundColor = "grey"
+            square.style.backgroundColor = "grey"
+            triangle.style.backgroundColor = "grey"
+            static.style.backgroundColor = "grey"
+            custom.style.backgroundColor = "grey"
+            swing.style.backgroundColor = "grey"
+            seasaw.style.backgroundColor = "grey"
+            weight.style.backgroundColor = "green"
         });
 
         custom.addEventListener("click", () => {
@@ -498,6 +545,8 @@
             static.style.backgroundColor = "grey"
             custom.style.backgroundColor = "green"
             swing.style.backgroundColor = "grey"
+            seasaw.style.backgroundColor = "grey"
+            weight.style.backgroundColor = "grey"
         });
 
         swing.addEventListener("click", () => {
@@ -509,6 +558,21 @@
             static.style.backgroundColor = "grey"
             custom.style.backgroundColor = "grey"
             swing.style.backgroundColor = "green"
+            seasaw.style.backgroundColor = "grey"
+            weight.style.backgroundColor = "grey"
+        });
+
+        seasaw.addEventListener("click", () => {
+            using = 7;
+            player.style.backgroundColor = "grey"
+            cursor.style.backgroundColor = "grey"
+            square.style.backgroundColor = "grey"
+            triangle.style.backgroundColor = "grey"
+            static.style.backgroundColor = "grey"
+            custom.style.backgroundColor = "grey"
+            swing.style.backgroundColor = "grey"
+            seasaw.style.backgroundColor = "green"
+            weight.style.backgroundColor = "grey"
         });
 
         pause.addEventListener("click", () => {
