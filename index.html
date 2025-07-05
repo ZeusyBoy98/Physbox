@@ -99,11 +99,19 @@
             transform: scale(0.99);
         }
 
-        input {
+        input[type="text"] {
             border: none;
             border-radius: 10px;
             padding: 5px;
             width: 70px;
+        }
+
+        
+        input[type="checkbox"] {
+            width: auto;
+            height: auto;
+            margin: 0 5px;
+            padding: 0;
         }
 
         @media (max-width: 1360px) {
@@ -156,6 +164,7 @@
         <button class="button" id="triangle" style="background-color: grey;">Triangle</button>
         <button class="button" id="static" style="background-color: grey;">Static</button>
         <button class="button" id="custom" style="background-color: grey;">Custom</button>
+        <button class="button" id="swing" style="background-color: grey;">Swing</button>
         <input type="text" id="customInput" name="customInput" value=5>
         <button class="button" id="pause"><i class="material-icons">pause</i></button>
     </div>
@@ -193,6 +202,7 @@
         3 = Triangle place
         4 = Static place
         5 = Custom place
+        6 = Swing place
         */
         const spawnedShapes = [];
 
@@ -210,6 +220,7 @@
         let triangle = document.getElementById("triangle");
         let static = document.getElementById("static");
         let custom = document.getElementById("custom");
+        let swing = document.getElementById("swing");
         let customInput = 5
         let pause = document.getElementById("pause");
 
@@ -229,7 +240,8 @@
             Render = Matter.Render,
             Runner = Matter.Runner,
             Bodies = Matter.Bodies,
-            Composite = Matter.Composite;
+            Composite = Matter.Composite,
+            Constraint = Matter.Constraint;
 
         let engine = Engine.create();
 
@@ -278,10 +290,11 @@
                     const bodyB = pair.bodyB;
 
                     if (bodyA.isStatic || bodyB.isStatic) return;
+                    if (bodyA.label === "swing" || bodyB.label === "swing") return;
 
                     if (cloneCooldown.has(bodyA.id)) return;
                     cloneCooldown.add(bodyA.id);
-                    setTimeout(() => cloneCooldown.delete(bodyA.id), 3000); // 1s cooldown
+                    setTimeout(() => cloneCooldown.delete(bodyA.id), 3000);
 
                     const width = bodyA.bounds.max.x - bodyA.bounds.min.x;
 
@@ -361,10 +374,24 @@
             } else if (using === 5) {
                 const { x, y } = event;
                 customInput = parseFloat(document.getElementById("customInput").value);
-                const newBody = Bodies.polygon(x, y, customInput, 50, {render: {fillStyle: newShapeColour}});
+                const newBody = Bodies.polygon(x, y, customInput, 25, {render: {fillStyle: newShapeColour}});
                 newBody.restitution = newBounce;
-                spawnedShapes.push(newBody);
+                spawnedShapes.push(newBody);    
                 World.add(engine.world, newBody);
+            } else if (using === 6) {
+                console.log("Swing placed");
+                const { x, y } = event;
+                const swingBar = Bodies.rectangle(x + 120, y, 240, 20, {render: { fillStyle: newShapeColour }, label: "swing"});
+                const hinge = Constraint.create({
+                    pointA: { x: x, y: y },
+                    bodyB: swingBar,
+                    pointB: { x: -120, y: 0 },
+                    length: 0,
+                    stiffness: 1
+                });
+                swingBar.restitution = newBounce;
+                spawnedShapes.push(swingBar, hinge);
+                World.add(engine.world, [swingBar, hinge]);
             }
         });
         
@@ -415,6 +442,7 @@
             triangle.style.backgroundColor = "grey"
             static.style.backgroundColor = "grey"
             custom.style.backgroundColor = "grey"
+            swing.style.backgroundColor = "grey"
         });
 
         player.addEventListener("click", () => {
@@ -425,6 +453,7 @@
             triangle.style.backgroundColor = "grey"
             static.style.backgroundColor = "grey"
             custom.style.backgroundColor = "grey"
+            swing.style.backgroundColor = "grey"
         });
 
         square.addEventListener("click", () => {
@@ -435,6 +464,7 @@
             triangle.style.backgroundColor = "grey"
             static.style.backgroundColor = "grey"
             custom.style.backgroundColor = "grey"
+            swing.style.backgroundColor = "grey"
         });
 
         triangle.addEventListener("click", () => {
@@ -445,6 +475,7 @@
             triangle.style.backgroundColor = "green"
             static.style.backgroundColor = "grey"
             custom.style.backgroundColor = "grey"
+            swing.style.backgroundColor = "grey"
         });
 
         static.addEventListener("click", () => {
@@ -455,6 +486,7 @@
             triangle.style.backgroundColor = "grey"
             static.style.backgroundColor = "green"
             custom.style.backgroundColor = "grey"
+            swing.style.backgroundColor = "grey"
         });
 
         custom.addEventListener("click", () => {
@@ -465,6 +497,18 @@
             triangle.style.backgroundColor = "grey"
             static.style.backgroundColor = "grey"
             custom.style.backgroundColor = "green"
+            swing.style.backgroundColor = "grey"
+        });
+
+        swing.addEventListener("click", () => {
+            using = 6;
+            player.style.backgroundColor = "grey"
+            cursor.style.backgroundColor = "grey"
+            square.style.backgroundColor = "grey"
+            triangle.style.backgroundColor = "grey"
+            static.style.backgroundColor = "grey"
+            custom.style.backgroundColor = "grey"
+            swing.style.backgroundColor = "green"
         });
 
         pause.addEventListener("click", () => {
