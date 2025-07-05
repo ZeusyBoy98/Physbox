@@ -142,6 +142,10 @@
   </head>
   <body>
     <div class="header" id="header">
+        <div style="display:flex;flex-direction: row;">
+            <label for="shapeception">Shapeception:</label>
+            <input type="checkbox" id="shapeception" name="shapeception" value="off">
+        </div>
         <button class="button" id="reset" style="background-color: red;">Reset</button>
         <button class="button" id="resetPlayer">Reset Player</button>
         <button class="button" id="resetPhysics">Reset Physics</button>
@@ -151,6 +155,8 @@
         <button class="button" id="square" style="background-color: grey;">Square</button>
         <button class="button" id="triangle" style="background-color: grey;">Triangle</button>
         <button class="button" id="static" style="background-color: grey;">Static</button>
+        <button class="button" id="custom" style="background-color: grey;">Custom</button>
+        <input type="text" id="customInput" name="customInput" value=5>
         <button class="button" id="pause"><i class="material-icons">pause</i></button>
     </div>
     <div class="header2" id="header2">
@@ -185,10 +191,12 @@
         1 = Square place
         2 = Cursor
         3 = Triangle place
-        4 = Static Place
+        4 = Static place
+        5 = Custom place
         */
         const spawnedShapes = [];
 
+        let shapeception = false                                ;
         let reset = document.getElementById("reset");
         let resetPlayer = document.getElementById("resetPlayer");
         let resetPhysics = document.getElementById("resetPhysics");
@@ -201,6 +209,8 @@
         let square = document.getElementById("square");
         let triangle = document.getElementById("triangle");
         let static = document.getElementById("static");
+        let custom = document.getElementById("custom");
+        let customInput = 5
         let pause = document.getElementById("pause");
 
         let using = 2;
@@ -255,6 +265,50 @@
             down: false
         };
 
+        const recentlyDuplicated = new Set();
+        const cloneCooldown = new Set();
+
+        Matter.Events.on(engine, 'collisionStart', (event) => {
+            shapeception = document.getElementById("shapeception").checked;
+            const pairs = event.pairs;
+
+            if (shapeception) {
+                pairs.forEach(pair => {
+                    const bodyA = pair.bodyA;
+                    const bodyB = pair.bodyB;
+
+                    if (bodyA.isStatic || bodyB.isStatic) return;
+
+                    if (cloneCooldown.has(bodyA.id)) return;
+                    cloneCooldown.add(bodyA.id);
+                    setTimeout(() => cloneCooldown.delete(bodyA.id), 3000); // 1s cooldown
+
+                    const width = bodyA.bounds.max.x - bodyA.bounds.min.x;
+
+                    const spawnX = bodyA.position.x + 30;
+                    const spawnY = bodyA.position.y - 30;
+
+                    const newBody = Matter.Bodies.polygon(
+                        spawnX,
+                        spawnY,
+                        bodyA.vertices.length,
+                        width / 2,
+                        { render: { fillStyle: newShapeColour } }
+                    );
+
+                    Matter.Body.setVelocity(newBody, {
+                        x: (Math.random() - 0.5) * 4,
+                        y: -3
+                    });
+
+                    newBody.restitution = newBounce;
+                    spawnedShapes.push(newBody);
+                    World.add(engine.world, newBody);
+                });
+            }
+        });
+
+
         function pausePhysics() {
             Runner.stop(runner);
             isPaused = true;
@@ -301,6 +355,13 @@
                 } else {
                     newBody = Bodies.rectangle(x, y, 200, 50, {isStatic: true, render: {fillStyle: "#616161"}});
                 }
+                newBody.restitution = newBounce;
+                spawnedShapes.push(newBody);
+                World.add(engine.world, newBody);
+            } else if (using === 5) {
+                const { x, y } = event;
+                customInput = parseFloat(document.getElementById("customInput").value);
+                const newBody = Bodies.polygon(x, y, customInput, 50, {render: {fillStyle: newShapeColour}});
                 newBody.restitution = newBounce;
                 spawnedShapes.push(newBody);
                 World.add(engine.world, newBody);
@@ -353,6 +414,7 @@
             square.style.backgroundColor = "grey"
             triangle.style.backgroundColor = "grey"
             static.style.backgroundColor = "grey"
+            custom.style.backgroundColor = "grey"
         });
 
         player.addEventListener("click", () => {
@@ -362,6 +424,7 @@
             square.style.backgroundColor = "grey"
             triangle.style.backgroundColor = "grey"
             static.style.backgroundColor = "grey"
+            custom.style.backgroundColor = "grey"
         });
 
         square.addEventListener("click", () => {
@@ -371,6 +434,7 @@
             square.style.backgroundColor = "green"
             triangle.style.backgroundColor = "grey"
             static.style.backgroundColor = "grey"
+            custom.style.backgroundColor = "grey"
         });
 
         triangle.addEventListener("click", () => {
@@ -380,6 +444,7 @@
             square.style.backgroundColor = "grey"
             triangle.style.backgroundColor = "green"
             static.style.backgroundColor = "grey"
+            custom.style.backgroundColor = "grey"
         });
 
         static.addEventListener("click", () => {
@@ -389,6 +454,17 @@
             square.style.backgroundColor = "grey"
             triangle.style.backgroundColor = "grey"
             static.style.backgroundColor = "green"
+            custom.style.backgroundColor = "grey"
+        });
+
+        custom.addEventListener("click", () => {
+            using = 5;
+            player.style.backgroundColor = "grey"
+            cursor.style.backgroundColor = "grey"
+            square.style.backgroundColor = "grey"
+            triangle.style.backgroundColor = "grey"
+            static.style.backgroundColor = "grey"
+            custom.style.backgroundColor = "green"
         });
 
         pause.addEventListener("click", () => {
