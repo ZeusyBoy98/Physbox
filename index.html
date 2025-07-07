@@ -184,9 +184,9 @@
             <label for="newBounce">New Shape Bounce:</label>
             <input type="text" id="newBounce" name="newBounce" value=0>
             <label for="playerColour">Player Colour:</label>
-            <input type="text" id="playerColour" name="playerColour" value="#e303fc">
+            <input type="color" id="playerColour" name="playerColour" value="#e303fc">
             <label for="newShapeColour">New Shape Colour:</label>
-            <input type="text" id="newShapeColour" name="newShapeColour" value="#ffffff">
+            <input type="color" id="newShapeColour" name="newShapeColour" value="#ffffff">
             <label for="staticRotation">Static Rotation:</label>
             <input type="text" id="staticRotation" name="staticRotation" value="0">
             <label for="newStatic">Static Shape:</label>
@@ -219,7 +219,6 @@
         let reset = document.getElementById("reset");
         let resetPlayer = document.getElementById("resetPlayer");
         let resetPhysics = document.getElementById("resetPhysics");
-        let submit = document.getElementById("submit");
         let header = document.getElementById("header");
         let header2 = document.getElementById("header2");
         let dropdown = document.getElementById("dropdown");
@@ -231,6 +230,7 @@
         let static = document.getElementById("static");
         let weight = document.getElementById("weight");
         let custom = document.getElementById("custom");
+        let swing = document.getElementById("swing");
         let seasaw = document.getElementById("seasaw");
         let customInput = 5
         let pause = document.getElementById("pause");
@@ -289,6 +289,11 @@
             right: false,
             down: false
         };
+
+        window.addEventListener("resize", () => {
+            render.canvas.width = window.innerWidth;
+            render.canvas.height = window.innerHeight;
+        });
 
         const recentlyDuplicated = new Set();
         const cloneCooldown = new Set();
@@ -488,7 +493,7 @@
             document.getElementById("gravity").value = 0.001;
             document.getElementById("velocity").value = 0.05;
             document.getElementById("newBounce").value = 0;
-            submit.click();
+            form.dispatchEvent(new Event("submit", { cancelable: true }));
         });
 
         dropdown.addEventListener("click", () => {
@@ -657,16 +662,16 @@
                 resumePhysics();
             }
         })
-        
-        const form = document.querySelector("form");
 
+        const form = document.querySelector("form");
+        
         window.addEventListener("load", () => {
             form.dispatchEvent(new Event("submit", { cancelable: true }));
-        });
 
-        form.querySelectorAll("input, select").forEach(input => {
-            input.addEventListener("input", () => form.dispatchEvent(new Event("submit", { cancelable: true })));
-            input.addEventListener("change", () => form.dispatchEvent(new Event("submit", { cancelable: true })));
+            form.querySelectorAll("input, select").forEach(input => {
+                input.addEventListener("input", () => form.dispatchEvent(new Event("submit", { cancelable: true })));
+                input.addEventListener("change", () => form.dispatchEvent(new Event("submit", { cancelable: true })));
+            });
         });
 
         form.addEventListener("submit", (e) => {
