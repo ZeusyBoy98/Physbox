@@ -103,7 +103,7 @@
             border: none;
             border-radius: 10px;
             padding: 5px;
-            width: 70px;
+            width: 40px;
         }
 
         
@@ -185,6 +185,8 @@
             <input type="text" id="playerColour" name="playerColour" value="#e303fc">
             <label for="newShapeColour">New Shape Colour:</label>
             <input type="text" id="newShapeColour" name="newShapeColour" value="#ffffff">
+            <label for="staticRotation">Static Rotation:</label>
+            <input type="text" id="staticRotation" name="staticRotation" value="0">
             <label for="newStatic">Static Shape:</label>
             <select name="newStatic" id="newStatic" class="button" style="background-color: white; color:black;">
                 <option value="default">Default</option>
@@ -235,6 +237,7 @@
 
         let modifier = 0.05;
         let newBounce = 0;
+        let staticRotation = 0;
         let playerColour = "#e303fc";
         let newShapeColour = "#ffffff";
         let newStaticShape = "default";
@@ -366,15 +369,16 @@
                 const { x, y } = event;
                 let newBody;
                 if (newStaticShape === "square") {
-                    newBody = Bodies.rectangle(x, y, 50, 50, {isStatic: true, render: {fillStyle: "#616161"}});
+                    newBody = Bodies.rectangle(x, y, 50, 50, {isStatic: true, render: {fillStyle: "#7d7d7d"}});
                 } else if (newStaticShape === "triangle") {
-                    newBody = Bodies.polygon(x, y, 3, 50, {isStatic: true, render: {fillStyle: "#616161"}});
+                    newBody = Bodies.polygon(x, y, 3, 50, {isStatic: true, render: {fillStyle: "#7d7d7d"}});
                 } else if (newStaticShape === "circle") {
-                    newBody = Bodies.circle(x, y, 25, {isStatic: true, render: {fillStyle: "#616161"}});
+                    newBody = Bodies.circle(x, y, 25, {isStatic: true, render: {fillStyle: "#7d7d7d"}});
                 } else {
-                    newBody = Bodies.rectangle(x, y, 200, 50, {isStatic: true, render: {fillStyle: "#616161"}});
+                    newBody = Bodies.rectangle(x, y, 200, 50, {isStatic: true, render: {fillStyle: "#7d7d7d"}});
                 }
                 newBody.restitution = newBounce;
+                Matter.Body.setAngle(newBody, staticRotation * Math.PI / 180)
                 spawnedShapes.push(newBody);
                 World.add(engine.world, newBody);
             } else if (using === 5) {
@@ -412,8 +416,8 @@
                 World.add(engine.world, [seasaw, hinge]);
             } else if (using === 8) {
                 const { x, y } = event;
-                const newBody = Bodies.rectangle(x, y, 50, 50, {render: {fillStyle: "#000000"}});
-                Body.setDensity(newBody, 10)
+                const newBody = Bodies.rectangle(x, y, 50, 50, {render: {fillStyle: "#383838"}});
+                Body.setDensity(newBody, 100)
                 spawnedShapes.push(newBody);
                 World.add(engine.world, newBody);
             }
@@ -597,6 +601,7 @@
             const playerColourInput = document.getElementById("playerColour").value.trim();
             const newShapeColourInput = document.getElementById("newShapeColour").value.trim();
             const newStaticInput = document.getElementById("newStatic").value;
+            const staticRotationInput = parseFloat(document.getElementById("staticRotation").value);
 
             if (!isNaN(bounceInput)) {
                 circle.restitution = bounceInput;
@@ -624,6 +629,10 @@
             }
 
             newStaticShape = newStaticInput;
+            
+            if (!isNaN(staticRotationInput)) {
+                staticRotation = staticRotationInput;
+            }
         });
 
         const isMobileBlocked = window.matchMedia("(max-width: 1360px)").matches;
