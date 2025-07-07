@@ -75,7 +75,8 @@
             color: #ffffff;
             font-family: sans-serif;
             height: 1.5vw;
-            font-size: 1rem;
+            font-size: 0.8rem;
+            font-weight: bold;
             cursor: pointer;
             text-align: center;
             display: flex;
@@ -160,6 +161,7 @@
         <button class="button" style="width: 2vw;" id="dropdown">+</button>
         <button class="button" id="cursor" style="background-color: green;">Cursor</button>
         <button class="button" id="player" style="background-color: grey;">Player</button>
+        <button class="button" id="delete" style="background-color: grey;">Delete</button>
         <button class="button" id="square" style="background-color: grey;">Square</button>
         <button class="button" id="triangle" style="background-color: grey;">Triangle</button>
         <button class="button" id="static" style="background-color: grey;">Static</button>
@@ -194,7 +196,6 @@
                 <option value="triangle">Triangle</option>
                 <option value="circle">Circle</option>
             </select>
-            <input class="button" type="submit" value="Submit" id="submit">
         </form>
     </div>
     <script src="matter.js"></script>
@@ -209,6 +210,8 @@
         5 = Custom place
         6 = Swing place
         7 = Seasaw place
+        8 = Weight place
+        9 = Delete object
         */
         const spawnedShapes = [];
 
@@ -222,6 +225,7 @@
         let dropdown = document.getElementById("dropdown");
         let cursor = document.getElementById("cursor");
         let player = document.getElementById("player");
+        let deleteObject = document.getElementById("delete");
         let square = document.getElementById("square");
         let triangle = document.getElementById("triangle");
         let static = document.getElementById("static");
@@ -267,7 +271,7 @@
         let ground = Bodies.rectangle(innerWidth / 2, innerHeight, innerWidth, 60, { isStatic: true });
         let leftWall = Bodies.rectangle(0, innerHeight / 2, 60, innerHeight * 100, {isStatic: true});
         let rightWall = Bodies.rectangle(innerWidth, innerHeight / 2, 60, innerHeight * 100, {isStatic: true});
-        let circle = Bodies.circle(innerWidth / 2, 40, 25, {render: {fillStyle: playerColour}});
+        let circle = Bodies.circle(innerWidth / 2, 40, 25, {render: {fillStyle: playerColour}, label: "player"});
 
         engine.gravity.scale = 0.001;
         circle.restitution = 1;
@@ -315,8 +319,10 @@
                         spawnY,
                         bodyA.vertices.length,
                         width / 2,
-                        { render: { fillStyle: newShapeColour } }
+                        { render: { fillStyle: bodyA.render.fillStyle } }
                     );
+
+                    Body.setDensity(newBody, bodyA.density)
 
                     Matter.Body.setVelocity(newBody, {
                         x: (Math.random() - 0.5) * 4,
@@ -330,7 +336,6 @@
             }
         });
 
-
         function pausePhysics() {
             Runner.stop(runner);
             isPaused = true;
@@ -340,6 +345,17 @@
             Runner.run(runner, engine);
             isPaused = false;
         }
+
+        function removeBodyAt (world, x, y) {
+            const bodies = Matter.Composite.allBodies(world);
+
+            for (let body of bodies) {
+                if (Matter.Bounds.contains(body.bounds, { x, y }) && Matter.Vertices.contains(body.vertices, { x, y })) {
+                    Matter.World.remove(world, body);
+                    break;
+                }
+            }
+        };
 
         document.body.addEventListener("mousedown", (event) => {
             if (event.target.closest("button, input, label, form")) {
@@ -420,6 +436,9 @@
                 Body.setDensity(newBody, 100)
                 spawnedShapes.push(newBody);
                 World.add(engine.world, newBody);
+            } else if (using === 9) {
+                const { x, y } = event;
+                removeBodyAt(engine.world, x, y);
             }
         });
         
@@ -430,11 +449,23 @@
                 World.remove(engine.world, body);
             }
             spawnedShapes.length = 0;
+            const playerExists = Composite.allBodies(engine.world).some(body => body.label === "player");
+            if (!playerExists) {
+                circle = Bodies.circle(innerWidth / 2, 40, 25, { render: { fillStyle: playerColour }, label: "player" });
+                Composite.add(engine.world, [circle]);
+                circle.restitution = 1;
+            }
         });
 
         resetPlayer.addEventListener("click", () => {
             Matter.Body.setPosition(circle, {x: innerWidth / 2, y: innerHeight / 2});
             Matter.Body.setVelocity(circle, {x: 0, y: 0});
+            const playerExists = Composite.allBodies(engine.world).some(body => body.label === "player");
+            if (!playerExists) {
+                circle = Bodies.circle(innerWidth / 2, 40, 25, { render: { fillStyle: playerColour }, label: "player" });
+                Composite.add(engine.world, [circle]);
+                circle.restitution = 1;
+            }
         });
 
         resetPhysics.addEventListener("click", () => {
@@ -473,6 +504,7 @@
             swing.style.backgroundColor = "grey"
             seasaw.style.backgroundColor = "grey"
             weight.style.backgroundColor = "grey"
+            deleteObject.style.backgroundColor = "grey"
         });
 
         player.addEventListener("click", () => {
@@ -486,6 +518,21 @@
             swing.style.backgroundColor = "grey"
             seasaw.style.backgroundColor = "grey"
             weight.style.backgroundColor = "grey"
+            deleteObject.style.backgroundColor = "grey"
+        });
+
+        deleteObject.addEventListener("click", () => {
+            using = 9;
+            player.style.backgroundColor = "grey"
+            cursor.style.backgroundColor = "grey"
+            square.style.backgroundColor = "grey"
+            triangle.style.backgroundColor = "grey"
+            static.style.backgroundColor = "grey"
+            custom.style.backgroundColor = "grey"
+            swing.style.backgroundColor = "grey"
+            seasaw.style.backgroundColor = "grey"
+            weight.style.backgroundColor = "grey"
+            deleteObject.style.backgroundColor = "green"
         });
 
         square.addEventListener("click", () => {
@@ -499,6 +546,7 @@
             swing.style.backgroundColor = "grey"
             seasaw.style.backgroundColor = "grey"
             weight.style.backgroundColor = "grey"
+            deleteObject.style.backgroundColor = "grey"
         });
 
         triangle.addEventListener("click", () => {
@@ -512,6 +560,7 @@
             swing.style.backgroundColor = "grey"
             seasaw.style.backgroundColor = "grey"
             weight.style.backgroundColor = "grey"
+            deleteObject.style.backgroundColor = "grey"
         });
 
         static.addEventListener("click", () => {
@@ -525,6 +574,7 @@
             swing.style.backgroundColor = "grey"
             seasaw.style.backgroundColor = "grey"
             weight.style.backgroundColor = "grey"
+            deleteObject.style.backgroundColor = "grey"
         });
 
         weight.addEventListener("click", () => {
@@ -538,6 +588,7 @@
             swing.style.backgroundColor = "grey"
             seasaw.style.backgroundColor = "grey"
             weight.style.backgroundColor = "green"
+            deleteObject.style.backgroundColor = "grey"
         });
 
         custom.addEventListener("click", () => {
@@ -551,6 +602,7 @@
             swing.style.backgroundColor = "grey"
             seasaw.style.backgroundColor = "grey"
             weight.style.backgroundColor = "grey"
+            deleteObject.style.backgroundColor = "grey"
         });
 
         swing.addEventListener("click", () => {
@@ -564,6 +616,7 @@
             swing.style.backgroundColor = "green"
             seasaw.style.backgroundColor = "grey"
             weight.style.backgroundColor = "grey"
+            deleteObject.style.backgroundColor = "grey"
         });
 
         seasaw.addEventListener("click", () => {
@@ -577,6 +630,7 @@
             swing.style.backgroundColor = "grey"
             seasaw.style.backgroundColor = "green"
             weight.style.backgroundColor = "grey"
+            deleteObject.style.backgroundColor = "grey"
         });
 
         pause.addEventListener("click", () => {
@@ -590,6 +644,15 @@
         })
         
         const form = document.querySelector("form");
+
+        window.addEventListener("load", () => {
+            form.dispatchEvent(new Event("submit", { cancelable: true }));
+        });
+
+        form.querySelectorAll("input, select").forEach(input => {
+            input.addEventListener("input", () => form.dispatchEvent(new Event("submit", { cancelable: true })));
+            input.addEventListener("change", () => form.dispatchEvent(new Event("submit", { cancelable: true })));
+        });
 
         form.addEventListener("submit", (e) => {
             e.preventDefault();
