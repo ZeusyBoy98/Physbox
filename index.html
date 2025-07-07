@@ -268,9 +268,9 @@
             }
         });
             
-        let ground = Bodies.rectangle(innerWidth / 2, innerHeight, innerWidth, 60, { isStatic: true });
-        let leftWall = Bodies.rectangle(0, innerHeight / 2, 60, innerHeight * 100, {isStatic: true});
-        let rightWall = Bodies.rectangle(innerWidth, innerHeight / 2, 60, innerHeight * 100, {isStatic: true});
+        let ground = Bodies.rectangle(innerWidth / 2, innerHeight, innerWidth, 60, { isStatic: true, label: "ground"});
+        let leftWall = Bodies.rectangle(0, innerHeight / 2, 60, innerHeight * 100, {isStatic: true, label: "leftWall"});
+        let rightWall = Bodies.rectangle(innerWidth, innerHeight / 2, 60, innerHeight * 100, {isStatic: true, label: "rightWall"});
         let circle = Bodies.circle(innerWidth / 2, 40, 25, {render: {fillStyle: playerColour}, label: "player"});
 
         engine.gravity.scale = 0.001;
@@ -454,6 +454,21 @@
                 circle = Bodies.circle(innerWidth / 2, 40, 25, { render: { fillStyle: playerColour }, label: "player" });
                 Composite.add(engine.world, [circle]);
                 circle.restitution = 1;
+            }
+            const leftWallExists = Composite.allBodies(engine.world).some(body => body.label === "leftWall");
+            if (!leftWallExists) {
+                leftWall = Bodies.rectangle(0, innerHeight / 2, 60, innerHeight * 100, {isStatic: true, label: "leftWall"});
+                Composite.add(engine.world, [leftWall]);
+            }
+            const rightWallExists = Composite.allBodies(engine.world).some(body => body.label === "rightWall");
+            if (!rightWallExists) {
+                rightWall = Bodies.rectangle(innerWidth, innerHeight / 2, 60, innerHeight * 100, {isStatic: true, label: "rightWall"});
+                Composite.add(engine.world, [rightWall]);
+            }
+            const groundExists = Composite.allBodies(engine.world).some(body => body.label === "ground");
+            if (!groundExists) {
+                ground = Bodies.rectangle(innerWidth / 2, innerHeight, innerWidth, 60, { isStatic: true, label: "ground"});
+                Composite.add(engine.world, [ground]);
             }
         });
 
